@@ -1,13 +1,32 @@
 var express = require('express')
 var multer  = require('multer')
+var crypto = require('crypto')
 var path = require('path');
 var cors = require('cors');
-var upload = multer({ dest: 'uploads/' })
+//var upload = multer({ dest: 'uploads/' })
 var mongodb = require('mongodb');
 var app = express();
 var uri  = 'mongodb://priyank:gahtori@ds051843.mlab.com:51843/resource_upload';
 var MongoClient = mongodb.MongoClient;
 app.use(cors());
+
+//save the filename along with extension
+var storage = multer.diskStorage({
+  destination: './uploads/',
+  filename: function (req, file, cb) {
+    crypto.pseudoRandomBytes(16, function (err, raw) {
+      if (err) return cb(err)
+
+      cb(null, raw.toString('hex') + path.extname(file.originalname))
+    })
+  }
+})
+
+var upload = multer({ storage: storage })
+
+//allow static files
+app.use('/uploads', express.static(__dirname + '/uploads'));
+//app.use(express.static('uploads'));
 
 app.post('/upload', upload.single('resource'), function (req, res, next) {
   console.log(req.file);
